@@ -66,6 +66,8 @@ val functionalTest = task<Test>("functionalTest") {
 dependencies {
     /* Spring Boot */
     implementation ("org.springframework.boot:spring-boot-starter-web")
+    implementation("jakarta.validation:jakarta.validation-api:3.0.2")
+    implementation("org.hibernate.validator:hibernate-validator:8.0.1.Final")
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude (group = "org.junit.vintage", module = "junit-vintage-engine")
     }
