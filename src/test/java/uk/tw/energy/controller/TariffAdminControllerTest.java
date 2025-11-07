@@ -27,7 +27,6 @@ class TariffAdminControllerTest {
     private MockMvc mockMvc;
 
     @MockBean
-    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     private TariffService tariffService;
 
     @Autowired
