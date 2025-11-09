@@ -1,0 +1,238 @@
+Act as a Senior Product Owner. I am an engineer on your team.
+
+We are working on the "Joy of Energy" project, a Java Spring Boot application for tracking smart meter electricity consumption and costs. The project's README and context are available at: https://github.com/nikmalykhin/joyofenergy-java
+
+The existing system has entities for Smart Meters, Electricity Readings (in kW), and Price Plans. The goal is to help users understand their energy usage and costs.
+
+You've assigned me a new story from the backlog, but it's just a one-line title. I need you to flesh this out into a complete user story that is "Ready for Dev."
+
+Here is the one-line story:
+**Story #2348: "As an administrator I want to add a new tariff so that it can be advertised to users who may benefit"**
+
+Please provide the following to make this actionable:
+
+1.  **A Well-Formed User Story:** In the standard "As a [User], I want [Action], so that [Rationale]" format.
+2.  **Proposed Data Model / Key Fields:** Based on the project's context, what fields must a new "Tariff" object contain? (e.g., tariff name, supplier, price per kWh, standing charge, start/end dates, etc.)
+3.  **Acceptance Criteria (AC):** Write 3-5 clear, testable ACs. They should cover:
+    * The "happy path" (successfully adding a tariff).
+    * Validation (e.g., what happens with invalid data like a negative price).
+    * Confirmation (e.g., the new tariff is saved and visible in the admin list).
+
+!!!!!!!!
+
+Got it. Thanks for grabbing this story. You're right, that one-liner isn't actionable. My apologies. I've fleshed this out with the details you need to get it "Ready for Dev."
+
+This story is foundational for our future "recommendation engine" feature, so it's key we get the data model right.
+
+---
+
+### **Story #2348: Add New Tariff**
+
+#### **1. Well-Formed User Story**
+
+As an **Administrator**, I want to **create and configure a new electricity tariff in the system**, so that **it can be stored and later advertised or applied to users who may benefit from it.**
+
+#### **2. Proposed Data Model / Key Fields**
+
+We'll need a new entity, let's call it `Tariff`. Based on the existing `PricePlan` context and the future need for advertising, this new `Tariff` object should be our standard going forward. It needs to be flexible enough to handle both simple flat rates and more complex "Time of Use" (ToU) plans.
+
+Here is the proposed model. This should likely be a new JPA entity (`@Entity`).
+
+**Entity: `Tariff`**
+
+| Field | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `UUID` | Primary Key, Not Null | Unique identifier for the tariff. |
+| `tariffName` | `String` | Not Null, Unique | The public-facing name (e.g., "Green Saver v3"). |
+| `supplierName` | `String` | Not Null | The name of the energy supplier (e.g., "EcoEnergy"). |
+| `tariffType` | `Enum` | Not Null | Defines the pricing model. Values: `FLAT_RATE`, `TIME_OF_USE`. |
+| `unitRateKwh` | `BigDecimal` | Nullable | The single price per kWh. **Required if** `tariffType` is `FLAT_RATE`. |
+| `hourlyRates` | `Map<Integer, BigDecimal>` | Nullable | A map of 24 rates, where Key = Hour (0-23) and Value = Price. **Required if** `tariffType` is `TIME_OF_USE`. (This could be an `@ElementCollection`). |
+| `standingChargePerDay` | `BigDecimal` | Not Null, Default 0 | The fixed daily cost, applied regardless of usage. |
+| `validFrom` | `LocalDate` | Not Null | The first date this tariff is active and available. |
+| `validTo` | `LocalDate` | Nullable | The final date this tariff is active (null if it's an ongoing plan). |
+| `description` | `String(1000)`| Nullable | A short marketing description to be "advertised to users." |
+
+#### **3. Acceptance Criteria (AC)**
+
+Here are the ACs to define "Done." This assumes we are building a new admin-facing form (e.g., a new endpoint/page in the admin part of the application).
+
+1.  **AC 1: (Happy Path) Successfully create a FLAT_RATE tariff**
+    * **Given** I am an Administrator logged into the system
+    * **When** I navigate to the "Add New Tariff" page
+    * **And** I fill in the form with:
+        * `tariffName`: "Everyday Simple"
+        * `supplierName`: "Bolt Energy"
+        * `tariffType`: `FLAT_RATE`
+        * `unitRateKwh`: `0.285`
+        * `standingChargePerDay`: `0.45`
+        * `validFrom`: (Today's date)
+    * **And** I submit the form
+    * **Then** a new `Tariff` entity is successfully saved to the database
+    * **And** I am shown a confirmation message (e.g., "Tariff 'Everyday Simple' created.")
+    * **And** the new tariff is visible in the admin "Tariff List."
+
+2.  **AC 2: (Happy Path) Successfully create a TIME_OF_USE tariff**
+    * **Given** I am an Administrator on the "Add New Tariff" page
+    * **When** I fill in the form with:
+        * `tariffName`: "Night Owl Saver"
+        * `supplierName`: "EcoEnergy"
+        * `tariffType`: `TIME_OF_USE`
+        * `standingChargePerDay`: `0.50`
+        * `validFrom`: (Today's date)
+    * **And** I provide 24 distinct hourly rates (e.g., hours 0-6 are 0.15, hours 7-23 are 0.35)
+    * **And** I submit the form
+    * **Then** a new `Tariff` entity is saved, including its associated map of 24 `hourlyRates`.
+    * **And** I am shown a confirmation message
+    * **And** the new tariff is visible in the admin "Tariff List."
+
+3.  **AC 3: (Validation) Fail to create a tariff with invalid prices**
+    * **Given** I am an Administrator on the "Add New Tariff" page
+    * **When** I attempt to submit the form with a `unitRateKwh` of `-0.10`
+    * **Then** the form is **not** submitted
+    * **And** a validation error is displayed: "Prices and charges cannot be negative."
+    * *(This AC should also apply to `standingChargePerDay` and all `hourlyRates`)*.
+
+4.  **AC 4: (Validation) Fail to create a tariff with conflicting type and rate data**
+    * **Given** I am an Administrator on the "Add New Tariff" page
+    * **When** I select `tariffType` = `FLAT_RATE` but I leave the `unitRateKwh` field empty
+    * **And** I attempt to submit the form
+    * **Then** the form is **not** submitted
+    * **And** a validation error is displayed: "Unit Rate (kWh) is required for a Flat Rate tariff."
+    * *(A similar check should exist: if `tariffType` = `TIME_OF_USE`, the `hourlyRates` map must be fully populated).*
+
+5.  **AC 5: (Validation) Fail to create a tariff with a missing required field**
+    * **Given** I am an Administrator on the "Add New Tariff" page
+    * **When** I fill in all fields *except* for `tariffName`
+    * **And** I attempt to submit the form
+    * **Then** the form is **not** submitted
+    * **And** a validation error is displayed: "Tariff Name is required."
+    * *(This AC applies to all `NotNull` fields: `tariffName`, `supplierName`, `tariffType`, `validFrom`).*
+
+---
+
+Let me know if this gives you enough to get started. We can sync up if you have any questions about the `TIME_OF_USE` implementation. Thanks!
+
+!!!!!!
+
+let's skip details of the implementation and focus on the user story and acceptance criteria
+
+!!!!!!
+
+You got it. Focusing just on the story and the "what," not the "how."
+
+Here is the core story and the definition of done.
+
+---
+
+### **Story #2348: Add New Tariff**
+
+#### **1. Well-Formed User Story**
+
+As an **Administrator**, I want to **create and configure a new electricity tariff in the system**, so that **it can be stored and later advertised or applied to users who may benefit from it.**
+
+---
+
+#### **2. Acceptance Criteria (AC)**
+
+1.  **AC 1: (Happy Path) Successfully create a FLAT_RATE tariff**
+    * **Given** I am an Administrator
+    * **When** I submit a new tariff form with all required fields for a `FLAT_RATE` (e.g., name, supplier, type, a single `unitRateKwh`, `standingChargePerDay`, `validFrom`)
+    * **Then** a new tariff is successfully saved to the database
+    * **And** I receive a confirmation message
+    * **And** the new tariff is visible in the admin "Tariff List."
+
+2.  **AC 2: (HappyPath) Successfully create a TIME_OF_USE tariff**
+    * **Given** I am an Administrator
+    * **When** I submit a new tariff form with all required fields for `TIME_OF_USE` (e.g., name, supplier, type, 24 distinct hourly rates, `standingChargePerDay`, `validFrom`)
+    * **Then** a new tariff is successfully saved, including all associated hourly rates
+    * **And** I receive a confirmation message
+    * **And** the new tariff is visible in the admin "Tariff List."
+
+3.  **AC 3: (Validation) Fail to create a tariff with invalid prices**
+    * **Given** I am an Administrator
+    * **When** I attempt to submit the form with a negative value for `unitRateKwh` or `standingChargePerDay`
+    * **Then** the form is **not** submitted
+    * **And** a validation error is displayed: "Prices and charges cannot be negative."
+
+4.  **AC 4: (Validation) Fail to create a tariff with conflicting type and rate data**
+    * **Given** I am an Administrator
+    * **When** I select `tariffType` = `FLAT_RATE` but I leave the `unitRateKwh` field empty
+    * **Then** the form is **not** submitted
+    * **And** a validation error is displayed: "Unit Rate (kWh) is required for a Flat Rate tariff."
+    * *(This also applies to a `TIME_OF_USE` tariff submitted without the required 24 hourly rates).*
+
+5.  **AC 5: (Validation) Fail to create a tariff with missing required fields**
+    * **Given** I am an Administrator
+    * **When** I attempt to submit the form without a `tariffName` or `supplierName`
+    * **Then** the form is **not** submitted
+    * **And** a validation error is displayed indicating the missing field (e.g., "Tariff Name is required.").
+
+---
+
+Is this more streamlined and focused on what you needed?
+
+!!!!!!
+
+we don't have database, if you will check the repo:
+https://github.com/nikmalykhin/joyofenergy-java/blob/main/src/main/java/uk/tw/energy/service/MeterReadingService.java
+
+we save data in the memory for now. let's use system as more generic word.
+check if it cintains similar mistakes
+
+!!!!!!
+
+You are absolutely right. My apologies.
+
+I got ahead of myself thinking about future persistence and ignored the current state. Thanks for checking the repo and correcting me. You're correct, we're using in-memory collections.
+
+Let's revise those ACs to be implementation-agnostic and use "system" as requested. The user story itself holds up, as "stored" can mean in-memory.
+
+---
+
+### **Story #2348: Add New Tariff**
+
+#### **1. Well-Formed User Story** (No Change)
+
+As an **Administrator**, I want to **create and configure a new electricity tariff in the system**, so that **it can be stored and later advertised or applied to users who may benefit from it.**
+
+---
+
+#### **2. Acceptance Criteria (AC) - Revised**
+
+1.  **AC 1: (Happy Path) Successfully create a FLAT_RATE tariff**
+    * **Given** I am an Administrator
+    * **When** I submit a new tariff form with all required fields for a `FLAT_RATE` (e.g., name, supplier, type, a single `unitRateKwh`, `standingChargePerDay`, `validFrom`)
+    * **Then** a new tariff is successfully **saved in the system**
+    * **And** I receive a confirmation message
+    * **And** the new tariff is retrievable from the admin "Tariff List" (i.e., it's in the system's active collection).
+
+2.  **AC 2: (HappyPath) Successfully create a TIME_OF_USE tariff**
+    * **Given** I am an Administrator
+    * **When** I submit a new tariff form with all required fields for `TIME_OF_USE` (e.g., name, supplier, type, 24 distinct hourly rates, `standingChargePerDay`, `validFrom`)
+    * **Then** a new tariff is successfully **saved in the system**, including all associated hourly rates
+    * **And** I receive a confirmation message
+    * **And** the new tariff is retrievable from the admin "Tariff List."
+
+3.  **AC 3: (Validation) Fail to create a tariff with invalid prices**
+    * **Given** I am an Administrator
+    * **When** I attempt to submit the form with a negative value for `unitRateKwh` or `standingChargePerDay`
+    * **Then** the form is **not** submitted
+    * **And** a validation error is displayed: "Prices and charges cannot be negative."
+
+4.  **AC 4: (Validation) Fail to create a tariff with conflicting type and rate data**
+    * **Given** I am an Administrator
+    * **When** I select `tariffType` = `FLAT_RATE` but I leave the `unitRateKwh` field empty
+    * **Then** the form is **not** submitted
+    * **And** a validation error is displayed: "Unit Rate (kWh) is required for a Flat Rate tariff."
+    * *(This also applies to a `TIME_OF_USE` tariff submitted without the required 24 hourly rates).*
+
+5.  **AC 5: (Validation) Fail to create a tariff with missing required fields**
+    * **Given** I am an Administrator
+    * **When** I attempt to submit the form without a `tariffName` or `supplierName`
+    * **Then** the form is **not** submitted
+    * **And** a validation error is displayed indicating the missing field (e.g., "Tariff Name is required.").
+
+---
+
+This looks much better and correctly reflects our current architecture. Thanks for the sharp eye. Does this set you up to get started?
