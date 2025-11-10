@@ -170,3 +170,42 @@ public class MeterReadingServiceTest {
 This test suite now fully covers the service logic and is ready for safe refactoring.
 
 !!!!!!      Ask AI to Implement Refactoring      !!!!!!
+
+Thank you. Now that I have a complete test suite, I am confident in making the change.  Please provide the final, refactored `MeterReadingService.java` class using the `computeIfAbsent` method you identified.
+
+!!!!!!
+
+The refactored `MeterReadingService` uses `computeIfAbsent` for conciseness in the `storeReadings` method. The rest of the class remains unchanged.
+
+```java
+// src/main/java/uk/tw/energy/service/MeterReadingService.java
+package uk.tw.energy.service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.springframework.stereotype.Service;
+import uk.tw.energy.domain.ElectricityReading;
+
+@Service
+public class MeterReadingService {
+
+    private final Map<String, List<ElectricityReading>> meterAssociatedReadings;
+
+    public MeterReadingService(Map<String, List<ElectricityReading>> meterAssociatedReadings) {
+        this.meterAssociatedReadings = meterAssociatedReadings;
+    }
+
+    public Optional<List<ElectricityReading>> getReadings(String smartMeterId) {
+        return Optional.ofNullable(meterAssociatedReadings.get(smartMeterId));
+    }
+
+    public void storeReadings(String smartMeterId, List<ElectricityReading> electricityReadings) {
+        meterAssociatedReadings
+            .computeIfAbsent(smartMeterId, k -> new ArrayList<>())
+            .addAll(electricityReadings);
+    }
+}
+```
+This version is concise and leverages modern Java 8+ Map APIs.
