@@ -1,3 +1,4 @@
+// src/main/java/uk/tw/energy/service/MeterReadingService.java
 package uk.tw.energy.service;
 
 import java.util.ArrayList;
@@ -21,9 +22,8 @@ public class MeterReadingService {
     }
 
     public void storeReadings(String smartMeterId, List<ElectricityReading> electricityReadings) {
-        if (!meterAssociatedReadings.containsKey(smartMeterId)) {
-            meterAssociatedReadings.put(smartMeterId, new ArrayList<>());
-        }
-        meterAssociatedReadings.get(smartMeterId).addAll(electricityReadings);
+        meterAssociatedReadings
+                .computeIfAbsent(smartMeterId, k -> new ArrayList<>())
+                .addAll(electricityReadings);
     }
 }
