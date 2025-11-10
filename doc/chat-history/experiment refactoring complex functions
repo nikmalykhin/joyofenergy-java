@@ -81,3 +81,92 @@ public void storeReadings(String smartMeterId, List<ElectricityReading> electric
 - For full thread safety, both reads and writes should be synchronized or use concurrent collections.
 
 !!!!!!      Ask AI for Test Coverage (The "Safety Zone")      !!!!!!
+
+That's a great suggestion. I want refactoring for conciseness: Use computeIfAbsent to initialize the list if absent. Before I apply that refactoring, I need to create a "safety zone" with unit tests, as this service currently cover only minimal cases in `MeterReadingServiceTest.java`.  Please analyze and extend tests.  The test class must cover: 1.  `getReadings()`:     * A test for a meter that has existing readings.     * A test for a meter that has no readings (should return an empty Optional). 2.  `storeReadings()` (The method we will refactor):     * A test that adds new readings to a meter that **already has** readings.     * A test that adds readings to a **brand new** meter (the `if` block's logic).
+
+!!!!!!
+
+To ensure safe refactoring, extend the test class to cover all specified scenarios. The new tests verify both reading retrieval and storing logic for meters with and without existing readings.
+
+**Explanation:**
+- Tests for `getReadings()` now check both present and absent readings.
+- Tests for `storeReadings()` verify adding to existing and new meters.
+
+```java
+// src/test/java/uk/tw/energy/service/MeterReadingServiceTest.java
+package uk.tw.energy.service;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import uk.tw.energy.domain.ElectricityReading;
+
+public class MeterReadingServiceTest {
+
+    private MeterReadingService meterReadingService;
+
+    @BeforeEach
+    public void setUp() {
+        meterReadingService = new MeterReadingService(new HashMap<>());
+    }
+
+    @Test
+    public void givenMeterIdThatDoesNotExistShouldReturnEmptyOptional() {
+        assertThat(meterReadingService.getReadings("unknown-id")).isEqualTo(Optional.empty());
+    }
+
+    @Test
+    public void givenMeterIdWithExistingReadingsShouldReturnReadings() {
+        String meterId = "meter-1";
+        List<ElectricityReading> readings = Arrays.asList(
+            new ElectricityReading(Instant.now(), BigDecimal.valueOf(10)),
+            new ElectricityReading(Instant.now(), BigDecimal.valueOf(20))
+        );
+        meterReadingService.storeReadings(meterId, readings);
+
+        assertThat(meterReadingService.getReadings(meterId)).isEqualTo(Optional.of(readings));
+    }
+
+    @Test
+    public void storeReadingsShouldAddToExistingMeter() {
+        String meterId = "meter-2";
+        List<ElectricityReading> initialReadings = Arrays.asList(
+            new ElectricityReading(Instant.now(), BigDecimal.valueOf(5))
+        );
+        meterReadingService.storeReadings(meterId, initialReadings);
+
+        List<ElectricityReading> newReadings = Arrays.asList(
+            new ElectricityReading(Instant.now(), BigDecimal.valueOf(15)),
+            new ElectricityReading(Instant.now(), BigDecimal.valueOf(25))
+        );
+        meterReadingService.storeReadings(meterId, newReadings);
+
+        List<ElectricityReading> expected = new ArrayList<>(initialReadings);
+        expected.addAll(newReadings);
+
+        assertThat(meterReadingService.getReadings(meterId)).isEqualTo(Optional.of(expected));
+    }
+
+    @Test
+    public void storeReadingsShouldAddToNewMeter() {
+        String meterId = "meter-3";
+        List<ElectricityReading> readings = Arrays.asList(
+            new ElectricityReading(Instant.now(), BigDecimal.valueOf(30))
+        );
+        meterReadingService.storeReadings(meterId, readings);
+
+        assertThat(meterReadingService.getReadings(meterId)).isEqualTo(Optional.of(readings));
+    }
+}
+```
+This test suite now fully covers the service logic and is ready for safe refactoring.
+
+!!!!!!      Ask AI to Implement Refactoring      !!!!!!
