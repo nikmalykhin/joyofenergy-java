@@ -1,0 +1,121 @@
+nikmalykhin-tw: Analyze this codebase to generate or update `.github/copilot-instructions.md` for guiding AI coding agents.
+
+Focus on discovering the essential knowledge that would help an AI agents be immediately productive in this codebase. Consider aspects like:
+- The "big picture" architecture that requires reading multiple files to understand - major components, service boundaries, data flows, and the "why" behind structural decisions
+- Critical developer workflows (builds, tests, debugging) especially commands that aren't obvious from file inspection alone
+- Project-specific conventions and patterns that differ from common practices
+- Integration points, external dependencies, and cross-component communication patterns
+
+Source existing AI conventions from `**/{.github/copilot-instructions.md,AGENT.md,AGENTS.md,CLAUDE.md,.cursorrules,.windsurfrules,.clinerules,.cursor/rules/**,.windsurf/rules/**,.clinerules/**,README.md}` (do one glob search).
+
+Guidelines (read more at https://aka.ms/vscode-instructions-docs):
+- If `.github/copilot-instructions.md` exists, merge intelligently - preserve valuable content while updating outdated sections
+- Write concise, actionable instructions (~20-50 lines) using markdown structure
+- Include specific examples from the codebase when describing patterns
+- Avoid generic advice ("write tests", "handle errors") - focus on THIS project's specific approaches
+- Document only discoverable patterns, not aspirational practices
+- Reference key files/directories that exemplify important patterns
+
+Update `.github/copilot-instructions.md` for the user, then ask for feedback on any unclear or incomplete sections to iterate.
+
+GitHub Copilot: Searched for text `` (`**/{.github/copilot-instructions.md,AGENT.md,AGENTS.md,CLAUDE.md,.cursorrules,.windsurfrules,.clinerules,.cursor/rules/**,.windsurf/rules/**,.clinerules/**,README.md}`), no results
+
+Read [](file:///Users/nikmalykhin/Projects/my-book/joyofenergy-java/.github/copilot-instructions.md)
+
+Read [](file:///Users/nikmalykhin/Projects/my-book/joyofenergy-java/README.md#1-1), lines 1 to 60
+
+Read [](file:///Users/nikmalykhin/Projects/my-book/joyofenergy-java/README.md#61-61), lines 61 to 150
+
+Read [](file:///Users/nikmalykhin/Projects/my-book/joyofenergy-java/README.md#151-151), lines 151 to 282
+
+Here is an updated copilot-instructions.md for your codebase, merging the existing rules and adding actionable, project-specific guidance for AI coding agents:
+
+---
+
+# Copilot Instructions for joyofenergy-java
+
+## Workflow Rules
+
+1. **Two-Phase Workflow**:  
+   - **Phase 1:** Propose a detailed plan for any significant change or feature.  
+   - **Phase 2:** Write code only after plan approval.  
+   *Why?* Prevents rushed implementations and enforces "Measure Twice, Code Once".
+
+2. **Package Structure**:  
+   - All code must use the `uk.tw.energy` package structure.  
+   *Why?* This corrects past mistakes and maintains consistency.
+
+3. **Small Steps**:  
+   - Keep methods under 20 lines when possible.  
+   - Break logic into private helper methods.  
+   *Why?* Supports maintainability and prepares for "Sized Steps" methodology.
+
+4. **Baseline Safety**:  
+   - Every new feature must include at least one "Happy Path" unit test.  
+   *Why?* Ensures new code is immediately runnable and safe.
+
+## Architecture Overview
+
+- **Domain**:  
+  - Core business logic is in `main/uk/tw/energy/domain/`.
+- **Controllers**:  
+  - API endpoints are in `main/uk/tw/energy/controller/`.
+- **Services**:  
+  - Application logic and integrations are in `main/uk/tw/energy/service/`.
+- **Generators**:  
+  - Data generation utilities are in `main/uk/tw/energy/generator/`.
+
+## Developer Workflows
+
+- **Build**:  
+  - Use `./gradlew build` to compile and test.
+- **Run**:  
+  - Use `./gradlew bootRun` or `java -jar build/libs/developer-joyofenergy-java.jar` (after build).
+- **Testing**:  
+  - Unit tests: `./gradlew test`  
+  - Functional tests: `./gradlew functionalTest`  
+  - All checks: `./gradlew check`
+- **API Testing**:  
+  - Use `curl` commands from README to interact with endpoints.
+
+## Project-Specific Patterns
+
+- **Smart Meter IDs**:  
+  - Use IDs from the README for test data and API calls.
+- **No Zero Readings**:  
+  - Power readings are always non-zero for simplicity.
+- **Price Plan Logic**:  
+  - Price plan comparisons and recommendations are exposed via `/price-plans/compare-all/{smartMeterId}` and `/price-plans/recommend/{smartMeterId}`.
+
+## Key Files & Directories
+
+- README.md: Architecture, API, and workflow reference.
+- copilot-instructions.md: AI agent rules.
+- `main/uk/tw/energy/`: Source code, organized by domain, controller, service, generator.
+- `test/uk/tw/energy/`: Unit tests.
+- `functionalTest/uk/tw/energy/`: Functional tests.
+
+## Conventions
+
+- **Gradle Wrapper**:  
+  - Always use gradlew for builds and tests.
+- **Java Version**:  
+  - Project requires Java 21.
+
+---
+
+Please review and let me know if any section is unclear or missing important project-specific details. I can further refine the instructions based on your feedback.
+
+nikmalykhin-tw: looks good
+
+GitHub Copilot: Using "Apply Patch"
+
+
+```
+
+```
+The copilot-instructions.md file has been updated to merge your existing rules with concise, actionable, project-specific guidance for AI agents. 
+
+Let me know if you want to further refine any section or add more details!
+
+Made changes.
