@@ -1,15 +1,14 @@
 // src/test/java/uk/tw/energy/service/TariffServiceTest.java
 package uk.tw.energy.service;
 
-import org.junit.jupiter.api.*;
-import uk.tw.energy.domain.Tariff;
-import uk.tw.energy.domain.TariffType;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.*;
+import uk.tw.energy.domain.Tariff;
+import uk.tw.energy.domain.TariffType;
 
 class TariffServiceTest {
 
@@ -29,8 +28,7 @@ class TariffServiceTest {
                 BigDecimal.valueOf(0.15),
                 BigDecimal.valueOf(0.20),
                 LocalDate.now(),
-                null
-        );
+                null);
 
         tariffService.save(tariff);
         List<Tariff> allTariffs = tariffService.findAll();

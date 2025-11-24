@@ -1,9 +1,9 @@
 package uk.tw.energy.controller;
 
+import java.util.List;
+import org.springframework.web.bind.annotation.*;
 import uk.tw.energy.domain.Tariff;
 import uk.tw.energy.service.TariffService;
-import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
 @RestController
 @RequestMapping("/admin/tariffs")

@@ -1,7 +1,14 @@
 // src/test/java/uk/tw/energy/controller/TariffAdminControllerTest.java
 package uk.tw.energy.controller;
 
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -11,14 +18,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import uk.tw.energy.domain.Tariff;
 import uk.tw.energy.domain.TariffType;
 import uk.tw.energy.service.TariffService;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.*;
-
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(TariffAdminController.class)
 class TariffAdminControllerTest {
@@ -41,8 +40,7 @@ class TariffAdminControllerTest {
                 BigDecimal.valueOf(0.15),
                 BigDecimal.valueOf(0.20),
                 LocalDate.of(2024, 1, 1),
-                null
-        );
+                null);
 
         when(tariffService.save(any(Tariff.class))).thenReturn(tariff);
 
@@ -60,8 +58,10 @@ class TariffAdminControllerTest {
 
     @Test
     void getAllTariffs_shouldReturnListOfTariffs() throws Exception {
-        Tariff t1 = new Tariff("T1", "S1", TariffType.FLAT_RATE, BigDecimal.ONE, BigDecimal.TEN, LocalDate.of(2024, 1, 1), null);
-        Tariff t2 = new Tariff("T2", "S2", TariffType.FLAT_RATE, BigDecimal.TEN, BigDecimal.ONE, LocalDate.of(2024, 2, 1), null);
+        Tariff t1 = new Tariff(
+                "T1", "S1", TariffType.FLAT_RATE, BigDecimal.ONE, BigDecimal.TEN, LocalDate.of(2024, 1, 1), null);
+        Tariff t2 = new Tariff(
+                "T2", "S2", TariffType.FLAT_RATE, BigDecimal.TEN, BigDecimal.ONE, LocalDate.of(2024, 2, 1), null);
 
         List<Tariff> tariffs = Arrays.asList(t1, t2);
         when(tariffService.findAll()).thenReturn(tariffs);

@@ -33,8 +33,7 @@ public class MeterReadingServiceTest {
         String meterId = "meter-1";
         List<ElectricityReading> readings = Arrays.asList(
                 new ElectricityReading(Instant.now(), BigDecimal.valueOf(10)),
-                new ElectricityReading(Instant.now(), BigDecimal.valueOf(20))
-        );
+                new ElectricityReading(Instant.now(), BigDecimal.valueOf(20)));
         meterReadingService.storeReadings(meterId, readings);
 
         assertThat(meterReadingService.getReadings(meterId)).isEqualTo(Optional.of(readings));
@@ -43,15 +42,13 @@ public class MeterReadingServiceTest {
     @Test
     public void storeReadingsShouldAddToExistingMeter() {
         String meterId = "meter-2";
-        List<ElectricityReading> initialReadings = Arrays.asList(
-                new ElectricityReading(Instant.now(), BigDecimal.valueOf(5))
-        );
+        List<ElectricityReading> initialReadings =
+                Arrays.asList(new ElectricityReading(Instant.now(), BigDecimal.valueOf(5)));
         meterReadingService.storeReadings(meterId, initialReadings);
 
         List<ElectricityReading> newReadings = Arrays.asList(
                 new ElectricityReading(Instant.now(), BigDecimal.valueOf(15)),
-                new ElectricityReading(Instant.now(), BigDecimal.valueOf(25))
-        );
+                new ElectricityReading(Instant.now(), BigDecimal.valueOf(25)));
         meterReadingService.storeReadings(meterId, newReadings);
 
         List<ElectricityReading> expected = new ArrayList<>(initialReadings);
@@ -63,9 +60,7 @@ public class MeterReadingServiceTest {
     @Test
     public void storeReadingsShouldAddToNewMeter() {
         String meterId = "meter-3";
-        List<ElectricityReading> readings = List.of(
-                new ElectricityReading(Instant.now(), BigDecimal.valueOf(30))
-        );
+        List<ElectricityReading> readings = List.of(new ElectricityReading(Instant.now(), BigDecimal.valueOf(30)));
         meterReadingService.storeReadings(meterId, readings);
 
         assertThat(meterReadingService.getReadings(meterId)).isEqualTo(Optional.of(readings));

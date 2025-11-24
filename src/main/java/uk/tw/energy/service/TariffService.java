@@ -1,9 +1,9 @@
 package uk.tw.energy.service;
 
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Service;
 import uk.tw.energy.domain.Tariff;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.*;
 
 @Service
 public class TariffService {
