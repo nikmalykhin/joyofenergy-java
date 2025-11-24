@@ -1,24 +1,25 @@
 package uk.tw.energy.controller;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.Instant;
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import uk.tw.energy.domain.ElectricityReading;
 import uk.tw.energy.domain.PricePlan;
+import uk.tw.energy.domain.PricePlanCost;
 import uk.tw.energy.service.AccountService;
 import uk.tw.energy.service.MeterReadingService;
 import uk.tw.energy.service.PricePlanService;
 
-public class PricePlanComparatorControllerTest {
+class PricePlanComparatorControllerTest {
+
     private static final String WORST_PLAN_ID = "worst-supplier";
     private static final String BEST_PLAN_ID = "best-supplier";
     private static final String SECOND_BEST_PLAN_ID = "second-best-supplier";
@@ -115,5 +116,45 @@ public class PricePlanComparatorControllerTest {
                 new AbstractMap.SimpleEntry<>(SECOND_BEST_PLAN_ID, BigDecimal.valueOf(28.0)),
                 new AbstractMap.SimpleEntry<>(WORST_PLAN_ID, BigDecimal.valueOf(140.0)));
         assertThat(response.getBody()).isEqualTo(expectedPricePlanToCost);
+    }
+
+    @Test
+    void compareByDayOfWeek_returnsCostsGroupedByDay() {
+        PricePlanService pricePlanService = Mockito.mock(PricePlanService.class);
+        AccountService accountService = Mockito.mock(AccountService.class);
+
+        Map<DayOfWeek, Map<String, BigDecimal>> mockResult = new EnumMap<>(DayOfWeek.class);
+        mockResult.put(DayOfWeek.MONDAY, Map.of("plan-A", BigDecimal.valueOf(10.5)));
+        Mockito.when(pricePlanService.getCostPerPlanPerDayOfWeek("meter-123")).thenReturn(Optional.of(mockResult));
+
+        PricePlanComparatorController controller = new PricePlanComparatorController(pricePlanService, accountService);
+
+        ResponseEntity<Map<DayOfWeek, Map<String, BigDecimal>>> response = controller.compareByDayOfWeek("meter-123");
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody()).isEqualTo(mockResult);
+    }
+
+    @Test
+    void rankLowestNByDayOfWeek_returnsRankedPlans() {
+        PricePlanService pricePlanService = Mockito.mock(PricePlanService.class);
+        AccountService accountService = Mockito.mock(AccountService.class);
+
+        List<PricePlanCost> mondayRanking = List.of(
+                new PricePlanCost("plan-B", BigDecimal.valueOf(9.5)),
+                new PricePlanCost("plan-A", BigDecimal.valueOf(10.5)));
+        Map<DayOfWeek, List<PricePlanCost>> mockRankings = new EnumMap<>(DayOfWeek.class);
+        mockRankings.put(DayOfWeek.MONDAY, mondayRanking);
+
+        Mockito.when(pricePlanService.rankLowestNPlansPerDayOfWeek("meter-123", 2))
+                .thenReturn(Optional.of(mockRankings));
+
+        PricePlanComparatorController controller = new PricePlanComparatorController(pricePlanService, accountService);
+
+        ResponseEntity<Map<DayOfWeek, List<PricePlanCost>>> response =
+                controller.rankLowestNByDayOfWeek("meter-123", 2);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody()).isEqualTo(mockRankings);
     }
 }
