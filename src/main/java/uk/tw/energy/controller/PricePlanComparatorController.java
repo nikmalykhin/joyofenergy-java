@@ -1,6 +1,7 @@
 package uk.tw.energy.controller;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import uk.tw.energy.domain.PricePlanCost;
 import uk.tw.energy.service.AccountService;
 import uk.tw.energy.service.PricePlanService;
 
@@ -68,5 +70,27 @@ public class PricePlanComparatorController {
         }
 
         return ResponseEntity.ok(recommendations);
+    }
+
+    // 1. View cost per price plan per day of week
+    @GetMapping("/price-plans/compare-by-day/{smartMeterId}")
+    public ResponseEntity<Map<DayOfWeek, Map<String, BigDecimal>>> compareByDayOfWeek(
+            @PathVariable String smartMeterId) {
+        Optional<Map<DayOfWeek, Map<String, BigDecimal>>> comparisons =
+                pricePlanService.getCostPerPlanPerDayOfWeek(smartMeterId);
+
+        return comparisons.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound()
+                .build());
+    }
+
+    // 2. View lowest n price plans per day of week
+    @GetMapping("/price-plans/rank-by-day/{smartMeterId}")
+    public ResponseEntity<Map<DayOfWeek, List<PricePlanCost>>> rankLowestNByDayOfWeek(
+            @PathVariable String smartMeterId, @RequestParam(defaultValue = "3") int limit) {
+        Optional<Map<DayOfWeek, List<PricePlanCost>>> rankings =
+                pricePlanService.rankLowestNPlansPerDayOfWeek(smartMeterId, limit);
+
+        return rankings.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }
