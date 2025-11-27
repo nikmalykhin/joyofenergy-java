@@ -131,7 +131,7 @@ Example of body
 Parameters
 
 | Parameter      | Description                                                    |
-|----------------|----------------------------------------------------------------|
+| -------------- | -------------------------------------------------------------- |
 | `smartMeterId` | One of the smart meters ids listed above.                      |
 | `time`         | The date/time (as epoch seconds) when the _reading_ was taken. |
 | `reading`      | The power consumption in `kW` at the _time_ of the reading.    |
@@ -139,7 +139,7 @@ Parameters
 Example readings
 
 | Date & Time (`GMT/UTC`) | Epoch timestamp (seconds) | Power Reading (`kW`) |
-|-------------------------|---------------------------|----------------------|
+| ----------------------- | ------------------------- | -------------------- |
 | `2020-11-29 8:00`       | 1606636800                | 0.0503               |
 | `2020-11-29 8:01`       | 1606636860                | 0.0621               |
 | `2020-11-29 8:02`       | 1606636920                | 0.0222               |
@@ -150,7 +150,7 @@ In the above example, the smart meter sampled power readings, in `kW`, every min
 not `kWH`, which means that each reading represents the _power_ consumption at the reading time. If no power is being consumed
 at the time of reading, then the reading value will be `0`. Given that `0` may introduce new challenges, we can assume
 that there is always some consumption, and we will never have a `0` reading value. These readings are then sent by the
-smart meter to the application using the HTTP API. 
+smart meter to the application using the HTTP API.
 
 There is a service in the application that calculates the energy used in `kWH` from these power readings over time.
 
@@ -177,7 +177,7 @@ GET /readings/read/<smartMeterId>
 Parameters:
 
 | Parameter      | Description                              |
-| -------------- |------------------------------------------|
+| -------------- | ---------------------------------------- |
 | `smartMeterId` | One of the smart meter ids listed above. |
 
 Retrieving readings using `curl`:
@@ -224,7 +224,7 @@ GET /price-plans/compare-all/<smartMeterId>
 Parameters
 
 | Parameter      | Description                              |
-|----------------|------------------------------------------|
+| -------------- | ---------------------------------------- |
 | `smartMeterId` | One of the smart meter ids listed above. |
 
 Retrieving readings using `curl`:
@@ -257,7 +257,7 @@ GET /price-plans/recommend/<smartMeterId>[?limit=<limit>]
 Parameters
 
 | Parameter      | Description                                           |
-| -------------- |-------------------------------------------------------|
+| -------------- | ----------------------------------------------------- |
 | `smartMeterId` | One of the smart meters ids listed above.             |
 | `limit`        | (Optional) limit the number of plans to be displayed. |
 
@@ -278,4 +278,79 @@ Example output:
     "price-plan-1": 0.0004
   }
 ]
+```
+
+### Compare Usage Cost by Day of Week
+
+Endpoint
+
+```text
+GET /price-plans/compare-by-day/<smartMeterId>
+```
+
+Parameters
+
+| Parameter      | Description                              |
+| -------------- | ---------------------------------------- |
+| `smartMeterId` | One of the smart meter ids listed above. |
+
+Example request:
+
+```console
+$ curl "http://localhost:8080/price-plans/compare-by-day/smart-meter-0"
+```
+
+Example response:
+
+```json
+{
+  "MONDAY": {
+    "price-plan-0": 0.002,
+    "price-plan-1": 0.0004,
+    "price-plan-2": 0.0002
+  },
+  "TUESDAY": {
+    "price-plan-0": 0.003,
+    "price-plan-1": 0.0005,
+    "price-plan-2": 0.0003
+  }
+}
+```
+
+---
+
+### Rank Lowest Price Plans by Day of Week
+
+Endpoint
+
+```text
+GET /price-plans/rank-by-day/<smartMeterId>?limit=<n>
+```
+
+Parameters
+
+| Parameter      | Description                                   |
+| -------------- | --------------------------------------------- |
+| `smartMeterId` | One of the smart meter ids listed above.      |
+| `limit`        | (Optional) limit the number of plans per day. |
+
+Example request:
+
+```console
+$ curl "http://localhost:8080/price-plans/rank-by-day/smart-meter-0?limit=2"
+```
+
+Example response:
+
+```json
+{
+  "MONDAY": [
+    { "planName": "price-plan-2", "cost": 0.0002 },
+    { "planName": "price-plan-1", "cost": 0.0004 }
+  ],
+  "TUESDAY": [
+    { "planName": "price-plan-2", "cost": 0.0003 },
+    { "planName": "price-plan-1", "cost": 0.0005 }
+  ]
+}
 ```
