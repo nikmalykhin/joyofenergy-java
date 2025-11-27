@@ -73,7 +73,7 @@ public class PricePlanComparatorController {
     }
 
     // 1. View cost per price plan per day of week
-    @GetMapping("/price-plans/compare-by-day/{smartMeterId}")
+    @GetMapping("/compare-by-day/{smartMeterId}")
     public ResponseEntity<Map<DayOfWeek, Map<String, BigDecimal>>> compareByDayOfWeek(
             @PathVariable String smartMeterId) {
         Optional<Map<DayOfWeek, Map<String, BigDecimal>>> comparisons =
@@ -84,7 +84,7 @@ public class PricePlanComparatorController {
     }
 
     // 2. View lowest n price plans per day of week
-    @GetMapping("/price-plans/rank-by-day/{smartMeterId}")
+    @GetMapping("/rank-by-day/{smartMeterId}")
     public ResponseEntity<Map<DayOfWeek, List<PricePlanCost>>> rankLowestNByDayOfWeek(
             @PathVariable String smartMeterId, @RequestParam(defaultValue = "3") int limit) {
         Optional<Map<DayOfWeek, List<PricePlanCost>>> rankings =
