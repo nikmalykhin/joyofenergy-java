@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -92,6 +93,90 @@ public class EndpointTest {
                 restTemplate.getForEntity("/price-plans/recommend/" + smartMeterId + "?limit=2", Map[].class);
 
         assertThat(response.getBody()).containsExactly(Map.of("price-plan-2", 3600), Map.of("price-plan-1", 7200));
+    }
+
+    @SuppressWarnings({"rawtypes", "DataFlowIssue"})
+    @Test
+    public void shouldCompareByDayOfWeek() {
+        String smartMeterId = "test-meter-day-compare";
+        List<ElectricityReading> mondayReadings = List.of(
+                new ElectricityReading(Instant.parse("2024-11-25T10:00:00Z"), new BigDecimal(15)),
+                new ElectricityReading(Instant.parse("2024-11-25T12:00:00Z"), new BigDecimal(25)));
+        List<ElectricityReading> tuesdayReadings = List.of(
+                new ElectricityReading(Instant.parse("2024-11-26T10:00:00Z"), new BigDecimal(20)),
+                new ElectricityReading(Instant.parse("2024-11-26T12:00:00Z"), new BigDecimal(30)));
+
+        List<ElectricityReading> allReadings = new ArrayList<>();
+        allReadings.addAll(mondayReadings);
+        allReadings.addAll(tuesdayReadings);
+
+        populateReadingsForMeter(smartMeterId, allReadings);
+
+        ResponseEntity<Map> response =
+                restTemplate.getForEntity("/price-plans/compare-by-day/" + smartMeterId, Map.class);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody()).containsKeys("MONDAY", "TUESDAY");
+
+        Map<String, Object> mondayCosts =
+                (Map<String, Object>) response.getBody().get("MONDAY");
+        assertThat(mondayCosts).containsKeys("price-plan-0", "price-plan-1", "price-plan-2");
+
+        Map<String, Object> tuesdayCosts =
+                (Map<String, Object>) response.getBody().get("TUESDAY");
+        assertThat(tuesdayCosts).containsKeys("price-plan-0", "price-plan-1", "price-plan-2");
+    }
+
+    @SuppressWarnings({"rawtypes", "DataFlowIssue"})
+    @Test
+    public void shouldRankLowestPlansByDayOfWeek() {
+        String smartMeterId = "test-meter-day-rank";
+        List<ElectricityReading> wednesdayReadings = List.of(
+                new ElectricityReading(Instant.parse("2024-11-27T10:00:00Z"), new BigDecimal(12)),
+                new ElectricityReading(Instant.parse("2024-11-27T12:00:00Z"), new BigDecimal(22)));
+        List<ElectricityReading> thursdayReadings = List.of(
+                new ElectricityReading(Instant.parse("2024-11-28T10:00:00Z"), new BigDecimal(18)),
+                new ElectricityReading(Instant.parse("2024-11-28T12:00:00Z"), new BigDecimal(28)));
+
+        List<ElectricityReading> allReadings = new ArrayList<>();
+        allReadings.addAll(wednesdayReadings);
+        allReadings.addAll(thursdayReadings);
+
+        populateReadingsForMeter(smartMeterId, allReadings);
+
+        ResponseEntity<Map> response =
+                restTemplate.getForEntity("/price-plans/rank-by-day/" + smartMeterId + "?limit=2", Map.class);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody()).containsKeys("WEDNESDAY", "THURSDAY");
+
+        List<Map<String, Object>> wednesdayRanking =
+                (List<Map<String, Object>>) response.getBody().get("WEDNESDAY");
+        assertThat(wednesdayRanking).hasSize(2);
+        assertThat(wednesdayRanking.get(0)).containsKey("planName");
+        assertThat(wednesdayRanking.get(0)).containsKey("cost");
+
+        List<Map<String, Object>> thursdayRanking =
+                (List<Map<String, Object>>) response.getBody().get("THURSDAY");
+        assertThat(thursdayRanking).hasSize(2);
+        assertThat(thursdayRanking.get(0)).containsKey("planName");
+        assertThat(thursdayRanking.get(0)).containsKey("cost");
+    }
+
+    @SuppressWarnings("rawtypes")
+    @Test
+    public void shouldReturnNotFoundWhenNoReadingsForDayOfWeek() {
+        String nonExistentMeterId = "non-existent-meter";
+
+        ResponseEntity<Map> compareResponse =
+                restTemplate.getForEntity("/price-plans/compare-by-day/" + nonExistentMeterId, Map.class);
+        assertThat(compareResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+        ResponseEntity<Map> rankResponse =
+                restTemplate.getForEntity("/price-plans/rank-by-day/" + nonExistentMeterId + "?limit=2", Map.class);
+        assertThat(rankResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     private void populateReadingsForMeter(String smartMeterId, List<ElectricityReading> data) {
